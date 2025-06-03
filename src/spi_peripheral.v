@@ -42,17 +42,17 @@ module spi_peripheral (
             
             nCS_sync <= {nCS_sync[0], nCS};  // Buffers used for syncing with clocks
             SCLK_sync <= {SCLK_sync[0], SCLK};
-            COPI_sync <= {COPI_sync[0], COPI_sync}
+            COPI_sync <= {COPI_sync[0], COPI_sync};
 
             if (nCS_sync == 2'b10) begin // Chip is turned on, reset stuff
                 SCLK_count <= '0;
-                data_stream <= '0;
+                data_in <= '0;
             end 
             
             else if (SCLK_sync == 2'b01) begin
                 if (SCLK_count <= 5'd15) begin
-                    SCLK_count <= SCLK_count + 1
-                    data_in <= {data_in[0:14], COPI[1]} // Read previous measure point to deal with CDC
+                    SCLK_count <= SCLK_count + 1;
+                    data_in <= {data_in[14:0], COPI[1]}; // Read previous measure point to deal with CDC
                 end
             end
 
