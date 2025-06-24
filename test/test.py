@@ -156,7 +156,7 @@ async def test_spi(dut):
 
 @cocotb.test()
 async def test_pwm_freq(dut):
-    dut._log.info("Start PWM frequency test")
+    dut._log.info("Start PWM duty cycle test")
 
     # Set the clock period to 100 ns (10 MHz)
     clock = Clock(dut.clk, 100, units="ns")
@@ -171,15 +171,22 @@ async def test_pwm_freq(dut):
     dut.ui_in.value = ui_in_logicarray(ncs, bit, sclk)
     dut.rst_n.value = 0
     await ClockCycles(dut.clk, 5)
+
+    dut._log.info("Reseting")
     dut.rst_n.value = 1
     await ClockCycles(dut.clk, 5)
 
+
+    dut._log.info("Reset Done")
+
     # set registers
     await send_spi_transaction(dut, 1, 0x00, 0x01) # output enable
+    dut._log.info("transaction 1 done")
     await send_spi_transaction(dut, 1, 0x02, 0x01) # pwm enable
+    dut._log.info("transaction 2 done")
     await send_spi_transaction(dut, 1, 0x04, 0x80) # set duty cycle to 50%
+    dut._log.info("transaction 3 done")
     await ClockCycles(dut.clk, 5)
-
     timeout_ns = 1e6
 
     # check for timeout case
