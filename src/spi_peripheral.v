@@ -59,11 +59,11 @@ module spi_peripheral (
             if (nCS_sync == 2'b01 && SCLK_count == 5'd16) begin // Check SPI has finished and that 16 bits were recieved
                 if (data_in[15]) begin
                     case(data_in[14:8])
-                        7'h01       : en_reg_out_7_0 <= data_in[7:0];
-                        7'h02       : en_reg_out_15_8 <= data_in[7:0];
-                        7'h03       : en_reg_pwm_7_0 <= data_in[7:0];
-                        7'h04       : en_reg_pwm_15_8 <= data_in[7:0];
-                        7'h05       : pwm_duty_cycle <= data_in[7:0];
+                        7'h00       : en_reg_out_7_0 <= data_in[7:0];
+                        7'h01       : en_reg_out_15_8 <= data_in[7:0];
+                        7'h02       : en_reg_pwm_7_0 <= data_in[7:0];
+                        7'h03       : en_reg_pwm_15_8 <= data_in[7:0];
+                        7'h04       : pwm_duty_cycle <= data_in[7:0];
                         default     : ; // Invalid address
                     endcase
                 end
