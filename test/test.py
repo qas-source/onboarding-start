@@ -210,85 +210,70 @@ async def test_pwm_freq(dut):
 
     dut._log.info("PWM Frequency test completed successfully")
 
-
 @cocotb.test()
 async def test_pwm_duty(dut):
-    # Write your test here
-
-        # Set the clock period to 100 ns (10 MHz)
     clock = Clock(dut.clk, 100, units="ns")
     cocotb.start_soon(clock.start())
 
-    # Reset
     dut._log.info("Reset")
     dut.ena.value = 1
-    ncs = 1
-    bit = 0
-    sclk = 0
-    dut.ui_in.value = ui_in_logicarray(ncs, bit, sclk)
+    dut.ui_in.value = ui_in_logicarray(1, 0, 0)
     dut.rst_n.value = 0
     await ClockCycles(dut.clk, 5)
-
-    dut._log.info("Reseting")
     dut.rst_n.value = 1
     await ClockCycles(dut.clk, 5)
 
-
     dut._log.info("Reset Done")
 
-    # set registers
-    await send_spi_transaction(dut, 1, 0x00, 0x01) # output enable
+    # Register setup
+    await send_spi_transaction(dut, 1, 0x00, 0x01)  # output enable
     dut._log.info("transaction 1 done")
-    await send_spi_transaction(dut, 1, 0x02, 0x01) # pwm enable
+    await send_spi_transaction(dut, 1, 0x02, 0x01)  # pwm enable
     dut._log.info("transaction 2 done")
-    await send_spi_transaction(dut, 1, 0x04, 0x80) # set duty cycle to 50%
+    await send_spi_transaction(dut, 1, 0x04, 0x80)  # 50% duty
     dut._log.info("transaction 3 done")
-    
 
     timeout_ns = 1e9
 
+    dut._log.info("Waiting for first rising edge...")
     rising_edge_1 = await First(RisingEdge(dut.uo_out), Timer(timeout_ns, units="ns"))
-    assert isinstance(rising_edge_1, RisingEdge), "timed out"
+    assert isinstance(rising_edge_1, RisingEdge), "Timed out waiting for first rising edge"
 
-    sampel_1 = cocotb.utils.get_sim_time(units="ns")  # Time of rising edge
+    sampel_1 = cocotb.utils.get_sim_time(units="ns")
 
+    dut._log.info("Waiting for falling edge...")
     falling_edge_1 = await First(FallingEdge(dut.uo_out), Timer(timeout_ns, units="ns"))
-    assert isinstance(falling_edge_1, FallingEdge), "timed out"
+    assert isinstance(falling_edge_1, FallingEdge), "Timed out waiting for falling edge"
 
-    sampel_2 = cocotb.utils.get_sim_time(units="ns")  # Time of falling edge
+    sampel_2 = cocotb.utils.get_sim_time(units="ns")
 
+    dut._log.info("Waiting for second rising edge...")
     rising_edge_2 = await First(RisingEdge(dut.uo_out), Timer(timeout_ns, units="ns"))
-    assert isinstance(rising_edge_2, RisingEdge), "timed out"
+    assert isinstance(rising_edge_2, RisingEdge), "Timed out waiting for second rising edge"
 
-    sampel_3 = cocotb.utils.get_sim_time(units="ns")  # Time of rising edge
+    sampel_3 = cocotb.utils.get_sim_time(units="ns")
 
     length = sampel_3 - sampel_1
     time_high = sampel_2 - sampel_1
     duty_cycle = (time_high / length) * 100
 
     dut._log.info(f'Duty cycle value (should be 50%): {duty_cycle}%')
-    assert 49 <= duty_cycle <= 51, "Failed 50%% duty cycle test"
+    assert 49 <= duty_cycle <= 51, "Failed 50% duty cycle test"
 
-    # CHECK DUTY CYCLE FOR 0%
-    await send_spi_transaction(dut, 1, 0x04, 0x00)  # set duty cycle to 0%
+    # 0% duty cycle test
+    await send_spi_transaction(dut, 1, 0x04, 0x00)
     timeout_ns = 1e4
-
-    # check that there are no rising edges
+    dut._log.info("Testing 0% duty cycle")
     rising_edge_0 = await First(RisingEdge(dut.uo_out), Timer(timeout_ns, units="ns"))
-    assert isinstance(rising_edge_0, Timer), "signal should never go high, test failed"
-
+    assert isinstance(rising_edge_0, Timer), "Signal should not go high at 0% duty cycle"
     dut._log.info("Duty Cycle 0% Verified")
 
-    # CHECK DUTY CYCLE FOR 100%
-    await send_spi_transaction(dut, 1, 0x04, 0xFF)  # set duty cycle to 100%
+    # 100% duty cycle test
+    await send_spi_transaction(dut, 1, 0x04, 0xFF)
     timeout_ns = 1e4
-
-    # check that there are no rising edges
+    dut._log.info("Testing 100% duty cycle")
     falling_edge_100 = await First(FallingEdge(dut.uo_out), Timer(timeout_ns, units="ns"))
-    assert isinstance(falling_edge_100, Timer), "signal should never go low, test failed"
-
+    assert isinstance(falling_edge_100, Timer), "Signal should not go low at 100% duty cycle"
     dut._log.info("Duty Cycle 100% Verified")
-
-    dut._log.info("PWM Duty Cycle test completed successfully")
 
     dut._log.info("PWM Duty Cycle test completed successfully")
