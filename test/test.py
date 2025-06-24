@@ -183,6 +183,7 @@ async def test_pwm_freq(dut):
     timeout_ns = 1e6
 
     # check for timeout case
+    dut._log.info("Begin test for frequency")
 
     # wait for rising edge
     rising_edge_1 = await First(RisingEdge(dut.uo_out), Timer(timeout_ns, units="ns"))
