@@ -180,7 +180,7 @@ async def test_pwm_freq(dut):
     await send_spi_transaction(dut, 1, 0x02, 0x01)  # Enable PWM
     await send_spi_transaction(dut, 1, 0x04, 0x80)  # Set duty cycle to 50%
 
-    timeout_ns = 1e9
+    timeout_ns = 1e6
 
     # check for timeout case
 
