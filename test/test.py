@@ -185,12 +185,12 @@ async def test_pwm_freq(dut):
     # check for timeout case
 
     # wait for rising edge
-    rising_edge_1 = await First(RisingEdge(dut.uo_out.value), Timer(timeout_ns, units="ns"))
+    rising_edge_1 = await First(RisingEdge(dut.uo_out), Timer(timeout_ns, units="ns"))
     assert isinstance(rising_edge_1, RisingEdge), "timed out"
 
     sample_start = cocotb.utils.get_sim_time(units="ns")
 
-    rising_edge_2 = await First(RisingEdge(dut.uo_out.value), Timer(timeout_ns, units="ns"))
+    rising_edge_2 = await First(RisingEdge(dut.uo_out), Timer(timeout_ns, units="ns"))
     assert isinstance(rising_edge_2, RisingEdge), "timed out"
 
     period = (cocotb.utils.get_sim_time(units="ns") - sample_start) * 1e-9
@@ -235,17 +235,17 @@ async def test_pwm_duty(dut):
 
     timeout_ns = 1e9
 
-    rising_edge_1 = await First(RisingEdge(dut.uo_out.value), Timer(timeout_ns, units="ns"))
+    rising_edge_1 = await First(RisingEdge(dut.uo_out), Timer(timeout_ns, units="ns"))
     assert isinstance(rising_edge_1, RisingEdge), "timed out"
 
     sampel_1 = cocotb.utils.get_sim_time(units="ns")  # Time of rising edge
 
-    falling_edge_1 = await First(FallingEdge(dut.uo_out.value), Timer(timeout_ns, units="ns"))
+    falling_edge_1 = await First(FallingEdge(dut.uo_out), Timer(timeout_ns, units="ns"))
     assert isinstance(falling_edge_1, FallingEdge), "timed out"
 
     sampel_2 = cocotb.utils.get_sim_time(units="ns")  # Time of falling edge
 
-    rising_edge_2 = await First(RisingEdge(dut.uo_out.value), Timer(timeout_ns, units="ns"))
+    rising_edge_2 = await First(RisingEdge(dut.uo_out), Timer(timeout_ns, units="ns"))
     assert isinstance(rising_edge_2, RisingEdge), "timed out"
 
     sampel_3 = cocotb.utils.get_sim_time(units="ns")  # Time of rising edge
@@ -262,7 +262,7 @@ async def test_pwm_duty(dut):
     timeout_ns = 1e4
 
     # check that there are no rising edges
-    rising_edge_0 = await First(RisingEdge(dut.uo_out.value), Timer(timeout_ns, units="ns"))
+    rising_edge_0 = await First(RisingEdge(dut.uo_out), Timer(timeout_ns, units="ns"))
     assert isinstance(rising_edge_0, Timer), "signal should never go high, test failed"
 
     dut._log.info("Duty Cycle 0% Verified")
@@ -272,7 +272,7 @@ async def test_pwm_duty(dut):
     timeout_ns = 1e4
 
     # check that there are no rising edges
-    falling_edge_100 = await First(FallingEdge(dut.uo_out.value), Timer(timeout_ns, units="ns"))
+    falling_edge_100 = await First(FallingEdge(dut.uo_out), Timer(timeout_ns, units="ns"))
     assert isinstance(falling_edge_100, Timer), "signal should never go low, test failed"
 
     dut._log.info("Duty Cycle 100% Verified")
