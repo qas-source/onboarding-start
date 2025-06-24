@@ -186,8 +186,17 @@ async def test_pwm_freq(dut):
     dut._log.info("transaction 2 done")
     await send_spi_transaction(dut, 1, 0x04, 0x80) # set duty cycle to 50%
     dut._log.info("transaction 3 done")
+    dut._log.info(f"en_reg_out_7_0 = {dut.en_reg_out_7_0.value}")
+    dut._log.info(f"en_reg_pwm_7_0 = {dut.en_reg_pwm_7_0.value}")
+    dut._log.info(f"pwm_duty_cycle = {dut.pwm_duty_cycle.value}")
     await ClockCycles(dut.clk, 5)
     timeout_ns = 1e7
+
+
+    dut._log.info(f"uo_out = {dut.uo_out.value}")
+    for _ in range(20):
+        await ClockCycles(dut.clk, 1000)
+        dut._log.info(f"time = {cocotb.utils.get_sim_time(units='us')} us, uo_out = {dut.uo_out.value}")
 
     # check for timeout case
     dut._log.info("Begin test for frequency")
