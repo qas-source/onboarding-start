@@ -68,7 +68,6 @@ module spi_peripheral (
                     endcase
                 end
             end
-
         end
     end
 
