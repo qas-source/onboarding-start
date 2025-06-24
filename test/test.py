@@ -181,11 +181,11 @@ async def test_pwm_freq(dut):
     #check for timeout case
     while dut.uo_out.value != 0: # Wait for output to go high
         await ClockCycles(dut.clk, 1)
-        assert (cocotb.utils.get_sim_time(units="ns") - test_start > 1e7), "timed out"
+        assert (cocotb.utils.get_sim_time(units="ns") - test_start < 1e7), "timed out"
 
     while dut.uo_out.value == 0: # Wait for next rising edge
         await ClockCycles(dut.clk, 1)
-        assert (cocotb.utils.get_sim_time(units="ns") - test_start > 1e7), "timed out"
+        assert (cocotb.utils.get_sim_time(units="ns") - test_start < 1e7), "timed out"
     
     sample_start = cocotb.utils.get_sim_time(units="ns")
 
@@ -235,37 +235,25 @@ async def test_pwm_duty(dut):
     await send_spi_transaction(dut, 1, 0x04, 0x80) # Set duty cycle to 50%
     await ClockCycles(dut.clk, 5)
 
-    # make sure start time is sampled at rising edge
-    start = cocotb.utils.get_sim_time(units="ns")
-    timeout = 1e6
-    # wait for next falling edge
-    while dut.uo_out.value != 0:
-        await ClockCycles(dut.clk, 1)
-        if (cocotb.utils.get_sim_time(units="ns") - start > timeout):
-            return -1
-
-    # wait for next rising edge
-    while dut.uo_out.value == 0:
-        await ClockCycles(dut.clk, 1)
-        if (cocotb.utils.get_sim_time(units="ns") - start > timeout):
-            return -1
-
 
     test_start = cocotb.utils.get_sim_time(units="ns")
 
 
     while dut.uo_out.value != 0: # Wait for output to go high
         await ClockCycles(dut.clk, 1)
+        assert (cocotb.utils.get_sim_time(units="ns") - test_start < 1e8), "timed out"
 
     sampel_1 = cocotb.utils.get_sim_time(units="ns") # Time of rising edge
 
     while dut.uo_out.value == 0: # Wait for output to go low
         await ClockCycles(dut.clk, 1)
+        assert (cocotb.utils.get_sim_time(units="ns") - test_start < 1e8), "timed out"
 
     sampel_2 = cocotb.utils.get_sim_time(units="ns") # Time of falling edge
 
     while dut.uo_out.value != 0: # Wait for output to go high
         await ClockCycles(dut.clk, 1)
+        assert (cocotb.utils.get_sim_time(units="ns") - test_start < 1e8), "timed out"
 
     sampel_3 = cocotb.utils.get_sim_time(units="ns") # Time of rising edge
 
