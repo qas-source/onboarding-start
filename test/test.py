@@ -243,7 +243,6 @@ async def test_pwm_duty(dut):
     dut._log.info("transaction 2 done")
     await send_spi_transaction(dut, 1, 0x04, 0x80) # set duty cycle to 50%
     dut._log.info("transaction 3 done")
-    await ClockCycles(dut.clk, 5)
     
 
     timeout_ns = 1e9
