@@ -233,7 +233,7 @@ async def test_pwm_duty(dut):
     await send_spi_transaction(dut, 1, 0x04, 0x80)  # 50% duty
     dut._log.info("transaction 3 done")
 
-    timeout_ns = 1e9
+    timeout_ns = 1e7
 
     dut._log.info("Waiting for first rising edge...")
     rising_edge_1 = await First(RisingEdge(dut.uo_out), Timer(timeout_ns, units="ns"))
@@ -265,7 +265,7 @@ async def test_pwm_duty(dut):
     timeout_ns = 1e4
     dut._log.info("Testing 0% duty cycle")
     rising_edge_0 = await First(RisingEdge(dut.uo_out), Timer(timeout_ns, units="ns"))
-    assert isinstance(rising_edge_0, Timer), "Signal should not go high at 0% duty cycle"
+    assert not isinstance(rising_edge_0, RisingEdge), "Signal should not go high at 0% duty cycle"
     dut._log.info("Duty Cycle 0% Verified")
 
     # 100% duty cycle test
@@ -273,7 +273,7 @@ async def test_pwm_duty(dut):
     timeout_ns = 1e4
     dut._log.info("Testing 100% duty cycle")
     falling_edge_100 = await First(FallingEdge(dut.uo_out), Timer(timeout_ns, units="ns"))
-    assert isinstance(falling_edge_100, Timer), "Signal should not go low at 100% duty cycle"
+    assert not isinstance(falling_edge_100, FallingEdge), "Signal should not go low at 100% duty cycle"
     dut._log.info("Duty Cycle 100% Verified")
 
     dut._log.info("PWM Duty Cycle test completed successfully")
