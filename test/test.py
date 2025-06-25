@@ -186,9 +186,6 @@ async def test_pwm_freq(dut):
     dut._log.info("transaction 2 done")
     await send_spi_transaction(dut, 1, 0x04, 0x80) # set duty cycle to 50%
     dut._log.info("transaction 3 done")
-    dut._log.info(f"en_reg_out_7_0 = {dut.en_reg_out_7_0.value}")
-    dut._log.info(f"en_reg_pwm_7_0 = {dut.en_reg_pwm_7_0.value}")
-    dut._log.info(f"pwm_duty_cycle = {dut.pwm_duty_cycle.value}")
     await ClockCycles(dut.clk, 5)
     timeout_ns = 1e7
 
@@ -245,6 +242,10 @@ async def test_pwm_duty(dut):
     timeout_ns = 1e7
 
     dut._log.info("Waiting for first rising edge...")
+    await RisingEdge(dut.uo_out)
+    
+    dut._log.info("Edge??")
+    
     rising_edge_1 = await First(RisingEdge(dut.uo_out), Timer(timeout_ns, units="ns"))
     assert isinstance(rising_edge_1, RisingEdge), "Timed out waiting for first rising edge"
 
