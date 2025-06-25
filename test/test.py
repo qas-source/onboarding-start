@@ -296,7 +296,7 @@ async def test_pwm_duty(dut):
     dut._log.info("Testing 0% duty cycle")
 
     rising_edge_0 = await rising_bit0_timeout(dut, timeout_ns)
-    assert (rising_edge_0), "Signal should stay low"
+    assert (rising_edge_0 == False), "Signal should stay low"
 
     dut._log.info("Duty Cycle 0% Verified")
 
@@ -306,7 +306,7 @@ async def test_pwm_duty(dut):
     dut._log.info("Testing 100% duty cycle")
 
     rising_edge_100 = await falling_bit0_timeout(dut, timeout_ns)
-    assert (rising_edge_100), "Signal should stay low"
+    assert (rising_edge_100 == False), "Signal should stay low"
 
     dut._log.info("Duty Cycle 100% Verified")
 
