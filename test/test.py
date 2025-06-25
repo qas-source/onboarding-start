@@ -164,7 +164,7 @@ async def rising_bit0_timeout(dut, timeout_ns):
     Returns True on success.
     """
     prev = dut.uo_out.value.integer & 1
-    start_time = get_sim_time(units="ns")
+    start_time = cocotb.utils.get_sim_time(units="ns")
 
     while True:
         await ClockCycles(dut.clk, 1)
@@ -173,7 +173,7 @@ async def rising_bit0_timeout(dut, timeout_ns):
             return cocotb.utils.get_sim_time(units="ns")
         prev = curr
 
-        if get_sim_time(units="ns") - start_time > timeout_ns:
+        if cocotb.utils.get_sim_time(units="ns") - start_time > timeout_ns:
             return False
 
 async def falling_bit0_timeout(dut, timeout_ns):
@@ -194,7 +194,7 @@ async def falling_bit0_timeout(dut, timeout_ns):
             return cocotb.utils.get_sim_time(units="ns")  # falling edge detected
         prev = curr
 
-        if get_sim_time(units="ns") - start_time > timeout_ns:
+        if cocotb.utils.get_sim_time(units="ns") - start_time > timeout_ns:
             return False
 
 @cocotb.test()
@@ -229,9 +229,9 @@ async def test_pwm_freq(dut):
 
 
     sample_start = await rising_bit0_timeout(dut, timeout_ns)
-    assert !sample_start, "Time out on rising edge"
+    assert sample_start != False, "Time out on rising edge"
     sample_end = await rising_bit0_timeout(dut, timeout_ns)
-    assert !sample_end, "Time out on falling edge"
+    assert sample_end != False, "Time out on falling edge"
 
 
     period = (sample_end - sample_start) * 1e-9
@@ -273,13 +273,13 @@ async def test_pwm_duty(dut):
 
     
     sample_1 = await rising_bit0_timeout(dut, timeout_ns)
-    assert (!sample_1), "Timed Out on rising edge"
+    assert (sample_1 != False), "Timed Out on rising edge"
 
     sample_2 = await falling_bit0_timeout(dut, timeout_ns)
-    assert (!sample_2), "Timed Out on falling edge"
+    assert (sample_2 != False), "Timed Out on falling edge"
 
     sample_3 = await rising_bit0_timeout(dut, timeout_ns)
-    assert (!sample_3), "Timed Out on rising edge"
+    assert (sample_3 != False), "Timed Out on rising edge"
 
 
 
@@ -304,7 +304,7 @@ async def test_pwm_duty(dut):
     await send_spi_transaction(dut, 1, 0x04, 0xFF)
     timeout_ns = 1e4
     dut._log.info("Testing 100% duty cycle")
-    
+
     rising_edge_100 = await falling_bit0_timeout(dut, timeout_ns)
     assert (rising_edge_100), "Signal should stay low"
 
