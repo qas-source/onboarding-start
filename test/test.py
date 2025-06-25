@@ -154,6 +154,49 @@ async def test_spi(dut):
     dut._log.info("SPI test completed successfully")
 
 
+
+async def rising_bit0_timeout(dut, timeout_ns):
+    """
+    Wait for a rising edge on bit 0 of dut.uo_out with a timeout.
+
+    Asserts if timeout occurs.
+
+    Returns True on success.
+    """
+    prev = dut.uo_out.value.integer & 1
+    start_time = get_sim_time(units="ns")
+
+    while True:
+        await ClockCycles(dut.clk, 1)
+        curr = dut.uo_out.value.integer & 1
+        if prev == 0 and curr == 1:
+            return cocotb.utils.get_sim_time(units="ns")
+        prev = curr
+
+        if get_sim_time(units="ns") - start_time > timeout_ns:
+            return False
+
+async def falling_bit0_timeout(dut, timeout_ns):
+    """
+    Wait for a falling edge on bit 0 of dut.uo_out with a timeout.
+
+    Asserts if timeout occurs.
+
+    Returns True on success.
+    """
+    prev = dut.uo_out.value.integer & 1
+    start_time = cocotb.utils.get_sim_time(units="ns")
+
+    while True:
+        await cocotb.triggers.ClockCycles(dut.clk, 1)
+        curr = dut.uo_out.value.integer & 1
+        if prev == 1 and curr == 0:
+            return cocotb.utils.get_sim_time(units="ns")  # falling edge detected
+        prev = curr
+
+        if get_sim_time(units="ns") - start_time > timeout_ns:
+            return False
+
 @cocotb.test()
 async def test_pwm_freq(dut):
     dut._log.info("Start PWM duty cycle test")
@@ -171,37 +214,27 @@ async def test_pwm_freq(dut):
     dut.ui_in.value = ui_in_logicarray(ncs, bit, sclk)
     dut.rst_n.value = 0
     await ClockCycles(dut.clk, 5)
-
-    dut._log.info("Reseting")
     dut.rst_n.value = 1
     await ClockCycles(dut.clk, 5)
 
-
-    dut._log.info("Reset Done")
-
     # set registers
     await send_spi_transaction(dut, 1, 0x00, 0x01) # output enable
-    dut._log.info("transaction 1 done")
     await send_spi_transaction(dut, 1, 0x02, 0x01) # pwm enable
-    dut._log.info("transaction 2 done")
     await send_spi_transaction(dut, 1, 0x04, 0x80) # set duty cycle to 50%
-    dut._log.info("transaction 3 done")
     await ClockCycles(dut.clk, 5)
     timeout_ns = 1e7
 
     # check for timeout case
     dut._log.info("Begin test for frequency")
 
-    # wait for rising edge
-    rising_edge_1 = await First(RisingEdge(dut.uo_out[0]), Timer(timeout_ns, units="ns"))
-    assert isinstance(rising_edge_1, RisingEdge), "timed out"
 
-    sample_start = cocotb.utils.get_sim_time(units="ns")
+    sample_start = await rising_bit0_timeout(dut, timeout_ns)
+    assert !sample_start, "Time out on rising edge"
+    sample_end = await rising_bit0_timeout(dut, timeout_ns)
+    assert !sample_end, "Time out on falling edge"
 
-    rising_edge_2 = await First(RisingEdge(dut.uo_out[0]), Timer(timeout_ns, units="ns"))
-    assert isinstance(rising_edge_2, RisingEdge), "timed out"
 
-    period = (cocotb.utils.get_sim_time(units="ns") - sample_start) * 1e-9
+    period = (sample_end - sample_start) * 1e-9
     frequency = 1 / period
 
     dut._log.info(f'Frequency: {frequency}')
@@ -238,25 +271,20 @@ async def test_pwm_duty(dut):
     
     dut._log.info("Edge??")
 
-    rising_edge_1 = await First(RisingEdge(dut.uo_out[0]), Timer(timeout_ns, units="ns"))
-    assert isinstance(rising_edge_1, RisingEdge), "Timed out waiting for first rising edge"
+    
+    sample_1 = await rising_bit0_timeout(dut, timeout_ns)
+    assert (!sample_1), "Timed Out on rising edge"
 
-    sampel_1 = cocotb.utils.get_sim_time(units="ns")
+    sample_2 = await falling_bit0_timeout(dut, timeout_ns)
+    assert (!sample_2), "Timed Out on falling edge"
 
-    dut._log.info("Waiting for falling edge...")
-    falling_edge_1 = await First(FallingEdge(dut.uo_out[0]), Timer(timeout_ns, units="ns"))
-    assert isinstance(falling_edge_1, FallingEdge), "Timed out waiting for falling edge"
+    sample_3 = await rising_bit0_timeout(dut, timeout_ns)
+    assert (!sample_3), "Timed Out on rising edge"
 
-    sampel_2 = cocotb.utils.get_sim_time(units="ns")
 
-    dut._log.info("Waiting for second rising edge...")
-    rising_edge_2 = await First(RisingEdge(dut.uo_out[0]), Timer(timeout_ns, units="ns"))
-    assert isinstance(rising_edge_2, RisingEdge), "Timed out waiting for second rising edge"
 
-    sampel_3 = cocotb.utils.get_sim_time(units="ns")
-
-    length = sampel_3 - sampel_1
-    time_high = sampel_2 - sampel_1
+    length = sample_3 - sample_1
+    time_high = sample_2 - sample_1
     duty_cycle = (time_high / length) * 100
 
     dut._log.info(f'Duty cycle value (should be 50%): {duty_cycle}%')
@@ -266,16 +294,20 @@ async def test_pwm_duty(dut):
     await send_spi_transaction(dut, 1, 0x04, 0x00)
     timeout_ns = 1e4
     dut._log.info("Testing 0% duty cycle")
-    rising_edge_0 = await First(RisingEdge(dut.uo_out[0]), Timer(timeout_ns, units="ns"))
-    assert not isinstance(rising_edge_0, RisingEdge), "Signal should not go high at 0% duty cycle"
+
+    rising_edge_0 = await rising_bit0_timeout(dut, timeout_ns)
+    assert (rising_edge_0), "Signal should stay low"
+
     dut._log.info("Duty Cycle 0% Verified")
 
     # 100% duty cycle test
     await send_spi_transaction(dut, 1, 0x04, 0xFF)
     timeout_ns = 1e4
     dut._log.info("Testing 100% duty cycle")
-    falling_edge_100 = await First(FallingEdge(dut.uo_out[0]), Timer(timeout_ns, units="ns"))
-    assert not isinstance(falling_edge_100, FallingEdge), "Signal should not go low at 100% duty cycle"
+    
+    rising_edge_100 = await falling_bit0_timeout(dut, timeout_ns)
+    assert (rising_edge_100), "Signal should stay low"
+
     dut._log.info("Duty Cycle 100% Verified")
 
     dut._log.info("PWM Duty Cycle test completed successfully")
